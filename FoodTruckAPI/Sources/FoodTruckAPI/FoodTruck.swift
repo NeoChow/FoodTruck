@@ -70,7 +70,7 @@ public class FoodTruck: FoodTruckAPI {
     }
     
     private func setupDb() {
-        
+        let couchClient = CouchDBClient(connectionProperties: self.connectionProps)
     }
     
     

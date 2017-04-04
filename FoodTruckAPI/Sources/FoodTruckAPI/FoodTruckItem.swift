@@ -6,33 +6,35 @@
 //
 //
 
+
 import Foundation
 
 typealias JSONDictionary = [String: Any]
 
-protocol  DictionaryConvertible {
+protocol DictionaryConvertible {
     func toDict() -> JSONDictionary
 }
 
 public struct FoodTruckItem {
+    
     /// ID
     public let docId: String
     
-    ///Name of the FoodTruck Business
+    /// Name of the FoodTruck Business
     public let name: String
     
-    ///Food Type
+    /// Food Type
     public let foodType: String
     
-    ///Average Cost
+    /// Average cost of the food served
     public let avgCost: Float
     
-    ///Lat Coordinates
+    /// Coordinate Latitude
     public let latitude: Float
     
-    ///Lon Coordinates
+    /// Coordinate Longitude
     public let longitude: Float
-
+    
     public init(docId: String, name: String, foodType: String, avgCost: Float, latitude: Float, longitude: Float) {
         self.docId = docId
         self.name = name
@@ -45,11 +47,12 @@ public struct FoodTruckItem {
 
 extension FoodTruckItem: Equatable {
     public static func == (lhs: FoodTruckItem, rhs: FoodTruckItem) -> Bool {
-        return lhs.name == rhs.name &&
-        lhs.foodType == rhs.foodType &&
-        lhs.avgCost == rhs.avgCost &&
-        lhs.latitude == rhs.latitude &&
-        lhs.longitude == rhs.longitude
+        return lhs.docId == rhs.docId &&
+            lhs.name == rhs.name &&
+            lhs.foodType == rhs.foodType &&
+            lhs.avgCost == rhs.avgCost &&
+            lhs.latitude == rhs.latitude &&
+            lhs.longitude == rhs.longitude
     }
 }
 
@@ -72,3 +75,4 @@ extension Array where Element: DictionaryConvertible {
         return self.map { $0.toDict() }
     }
 }
+

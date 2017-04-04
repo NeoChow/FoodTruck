@@ -151,4 +151,62 @@ public class FoodTruck: FoodTruckAPI {
         }
         return trucks
     }
+    
+    //Get specific Food Truck
+    public func getTruck(docId: String, completion: @escaping (FoodTruckItem?, Error?) -> Void) {
+        
+        //setup db connection
+        let couchClient = CouchDBClient(connectionProperties: connectionProps)
+        let database = couchClient.database(dbName)
+        
+        database.retrieve(docId) { (doc, err) in
+            guard let doc = doc,
+                let docId = doc["id"].string,
+                let name = doc["name"].string,
+                let foodType = doc["foodtype"].string,
+                let avgCost = doc["avgcost"].float,
+                let latitude = doc["latitude"].float,
+                let longitude = doc["longitude"].float else {
+            completion(nil, err)
+            return
+            }
+            let truckItem = FoodTruckItem(docId: docId, name: name, foodType: foodType, avgCost: avgCost, latitude: latitude, longitude: longitude)
+            completion(foodItem, nil)
+        }
+        
+    }
+    
+    //Add Food Truck
+    public func addTruck(name: String, foodType: String, avgCost: Float, latitude: Float, longitude: Float, completion: @escaping (FoodTruckItem?, Error?) -> Void) {
+        let json: [String: Any] = [
+            "type": "foodtruck",
+            "name": name,
+            "foodtype": foodType,
+            "avgcost": avgCost,
+            "latitude": latitude,
+            "longitude": longitude
+        ]
+        //setup connection to db:
+        let couchClient = CouchDBClient(connectionProperties: connectionProps)
+        let database = couchClient.database(dbName)
+        //id, revision, doc, err are all optional, need to unwrap:
+        database.create(JSON(json)) { (id, revision, doc, err) in
+            if let id = id {
+                let truckItem = FoodTruckItem(docId: id, name: name, foodType: foodType, avgCost: avgCost, latitude: latitude, longitude: longitude)
+                completion(truckItem, nil)
+            } else {
+                completion(nil, err)
+            }
+        }
+    }
+    
+    //Remove all Food Trucks (for testing, need to be able to wipe all trucks in db)
+    public func clearAll(completion: @escaping (Error?) -> Void) {
+        
+    }
+    
+    //Delete specific Food Truck
+    public func deleteTruck(docId: String, completion: @escaping (Error?) -> Void) {
+        
+    }
 }

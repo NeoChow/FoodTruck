@@ -201,12 +201,83 @@ public class FoodTruck: FoodTruckAPI {
     }
     
     //Remove all Food Trucks (for testing, need to be able to wipe all trucks in db)
+    //won't make this available to client code, just for testing
     public func clearAll(completion: @escaping (Error?) -> Void) {
         
+        let couchClient = CouchDBClient(connectionProperties: connectionProps)
+        let database = couchClient.database(dbName)
+        //query by view, get all docs
+        database.queryByView("all_documents", ofDesign: "foodtruckdesign", usingParameters: [.descending(true), .includeDocs(true)]) { (doc, err) in
+            
+            //walk through and get id and revision for each to delete
+            guard let doc = doc else {
+                completion(err)
+                return
+            }
+            guard let idAndRev = try? self.getIdAndRev(doc) else {
+                completion(err)
+                return
+            }
+            
+            if idAndRev.count == 0 {
+                completion(nil)
+            } else {
+                for i in 0...idAndRev.count - 1 {
+                    let truck = idAndRev[i]
+                    
+                    database.delete(truck.0, rev: truck.1, callback: { (err) in
+                        guard err == nil else {
+                            completion(err)
+                            return
+                        }
+                        completion(nil)
+                    })
+                }
+            }
+        }
+    }
+    
+    func getIdAndRev(_ document: JSON) throws -> [(String, String)] {
+        guard let rows = document["rows"].array else {
+            throw APICollectionError.ParseError
+        }
+        return rows.flatMap {
+            let doc = $0["doc"]
+            let id = doc["_id"].stringValue
+            let rev = doc["_rev"].stringValue
+            return (id, rev)
+        }
     }
     
     //Delete specific Food Truck
     public func deleteTruck(docId: String, completion: @escaping (Error?) -> Void) {
+        let couchClient = CouchDBClient(connectionProperties: connectionProps)
+        let database = couchClient.database(dbName)
         
+        //fetch doc
+        database.retrieve(docId) { (doc, err) in
+            guard let doc = doc , err == nil else {
+                completion(nil)
+                return
+                
+            }
+            
+            //TODO: fetch all reviews
+            
+            //TODO: once have reviews, go through each and delete them:
+            
+            
+            //get revision:
+            let rev = doc["_rev"].stringValue
+            
+            //delete:
+            database.delete(docId, rev: rev) { (err) in
+                if err != nil {
+                    completion(err)
+                } else {
+                    completion(nil)
+                }
+            }
+        }
     }
 }

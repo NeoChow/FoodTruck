@@ -171,7 +171,7 @@ public class FoodTruck: FoodTruckAPI {
             return
             }
             let truckItem = FoodTruckItem(docId: docId, name: name, foodType: foodType, avgCost: avgCost, latitude: latitude, longitude: longitude)
-            completion(foodItem, nil)
+            completion(truckItem, nil)
         }
         
     }

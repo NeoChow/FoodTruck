@@ -28,9 +28,12 @@ public final class FoodTruckController {
         //FoodTruck Handling
         // all trucks:
         router.get(trucksPath, handler: getTrucks)
+        
         //add truck:
         router.post(trucksPath, handler: addTruck)
         
+        //get specific truck
+        router.get("\(trucksPath)/:id", handler: getTruckById)
     }
     
     private func getTrucks(request: RouterRequest, response: RouterResponse, next: () -> Void) {
@@ -106,5 +109,33 @@ public final class FoodTruckController {
                 Log.error("communications error")
             }
         }
+    }
+    
+    private func getTruckById(request: RouterRequest, response: RouterResponse, next: () -> Void) {
+        guard let docId = request.parameters["id"] else {
+            response.status(.badRequest)
+            Log.error("no ID supplied")
+            return
+        }
+        trucks.getTruck(docId: docId) { (truck, err) in
+            do {
+                guard err == nil else {
+                    try response.status(.badRequest).end()
+                    Log.error(err.debugDescription)
+                    return
+                }
+                if let truck = truck {
+                    let result = JSON(truck.toDict())
+                    try response.status(.OK).send(json: result).end()
+                } else {
+                    Log.warning("could not find truck by that id")
+                    response.status(.notFound)
+                    return
+                }
+            } catch {
+                Log.error("communications error")
+            }
+        }
+        
     }
 }

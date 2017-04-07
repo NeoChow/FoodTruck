@@ -161,7 +161,7 @@ public class FoodTruck: FoodTruckAPI {
         
         database.retrieve(docId) { (doc, err) in
             guard let doc = doc,
-                let docId = doc["id"].string,
+                let docId = doc["_id"].string,
                 let name = doc["name"].string,
                 let foodType = doc["foodtype"].string,
                 let avgCost = doc["avgcost"].float,

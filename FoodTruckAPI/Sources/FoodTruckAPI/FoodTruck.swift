@@ -280,4 +280,70 @@ public class FoodTruck: FoodTruckAPI {
             }
         }
     }
+    
+    //Update specific Food Truck
+    public func updateTruck(docId: String, name: String?, foodType: String?, avgCost: Float?, latitude: Float?, longitude: Float?, completion: @escaping (FoodTruckItem?, Error?) -> Void) {
+        let couchClient = CouchDBClient(connectionProperties: connectionProps)
+        let database = couchClient.database(dbName)
+        
+        database.retrieve(docId) { (doc, err) in
+            guard let doc = doc else {
+                completion(nil, APICollectionError.AuthError)
+                return
+            }
+            //pull rev out of doc, must have to update:
+            guard let rev = doc["_rev"].string else {
+                completion(nil, APICollectionError.ParseError)
+                return
+            }
+            
+            let type = "foodtruck"
+            //assign local var name to value of name passed in, if there is one. otherwise use name from doc retrieved:
+            let name = name ?? doc["name"].stringValue
+            let foodType = foodType ?? doc["foodtype"].stringValue
+            let avgCost = avgCost ?? doc["avgcost"].floatValue
+            let latitude = latitude ?? doc["latitude"].floatValue
+            let longitude = longitude ?? doc["longitude"].floatValue
+            
+            //create new json object to update
+            let json: [String: Any] = [
+                "type": type,
+                "name": name,
+                "foodtype": foodType,
+                "avgcost": avgCost,
+                "latitude": latitude,
+                "longitude": longitude
+            ]
+            
+            //call method on db:
+            database.update(docId, rev: rev, document: JSON(json), callback: { (rev, doc, err) in
+                guard err == nil else {
+                    completion(nil, err)
+                    return
+                }
+                
+                //pass item back to completion handler:
+                completion(FoodTruckItem(docId: docId, name: name, foodType: foodType, avgCost: avgCost, latitude: latitude, longitude: longitude), nil)
+            })
+            
+        }
+    }
+    //Count all food trucks:
+    public func countTrucks(completion: @escaping (Int?, Error?) -> Void) {
+        let couchClient = CouchDBClient(connectionProperties: connectionProps)
+        let database = couchClient.database(dbName)
+        
+        database.queryByView("total_trucks", ofDesign: "foodtruckdesign", usingParameters: []) { (doc, err) in
+            if let doc = doc, err == nil {
+                if let count = doc["rows"][0]["value"].int {
+                    completion(count, nil)
+                } else {
+                    completion(0, nil)
+                }
+                
+            } else {
+                completion(nil, err)
+            }
+        }
+    }
 }

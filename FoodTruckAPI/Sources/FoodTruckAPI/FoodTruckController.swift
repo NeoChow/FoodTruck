@@ -37,6 +37,12 @@ public final class FoodTruckController {
         
         //delete truck
         router.delete("\(trucksPath)/:id", handler:  deleteTruckById)
+        
+        //update truck
+        router.put("\(trucksPath)/:id", handler: updateTruckById)
+        
+        //truck count
+        router.get("\(trucksPath)/count", handler: getTruckCount)
     }
     
     private func getTrucks(request: RouterRequest, response: RouterResponse, next: () -> Void) {
@@ -162,4 +168,71 @@ public final class FoodTruckController {
         }
     }
     
+    private func updateTruckById(request: RouterRequest, response: RouterResponse, next: () -> Void) {
+        guard let docId = request.parameters["id"] else {
+            response.status(.badRequest)
+            Log.error("id not found in request")
+            return
+        }
+        //need body for updates:
+        guard let body = request.body else {
+            response.status(.badRequest)
+            Log.error("no body found in request")
+            return
+        }
+        guard case let .json(json) = body else {
+            response.status(.badRequest)
+            Log.error("invalid JSON data supplied")
+            return
+        }
+        
+        let name: String? = json["name"].stringValue == "" ? nil : json["name"].stringValue
+        let foodType: String? = json["foodtype"].stringValue == "" ? nil : json["foodtype"].stringValue
+        let avgCost: Float? = json["avgcost"].floatValue == 0 ? nil : json["avgcost"].floatValue
+        let latitude: Float? = json["latitude"].floatValue == 0 ? nil : json["latitude"].floatValue
+        let longitude: Float? = json["longitude"].floatValue == 0 ? nil : json["longitude"].floatValue
+        
+        //call update method:
+        trucks.updateTruck(docId: docId, name: name, foodType: foodType, avgCost: avgCost, latitude: latitude, longitude: longitude) { (updatedTruck, err) in
+            do {
+                guard err == nil else {
+                    try response.status(.badRequest).end()
+                    Log.error(err.debugDescription)
+                    return
+                }
+                if let updatedTruck = updatedTruck {
+                    let result = JSON(updatedTruck.toDict())
+                    try response.status(.OK).send(json: result).end()
+                } else {
+                    Log.error("invalid truck returned.")
+                    try response.status(.badRequest).end()
+                }
+            } catch {
+                Log.error("communications error")
+            }
+        }
+    }
+    
+    private func getTruckCount(request: RouterRequest, response: RouterResponse, next: () -> Void) {
+        trucks.countTrucks { (count, err) in
+            do {
+                guard err == nil else {
+                    try response.status(.badRequest).end()
+                    Log.error(err.debugDescription)
+                    return
+                }
+                guard let count = count else {
+                    try response.status(.internalServerError).end()
+                    Log.error("failed to get count")
+                    return
+                }
+                
+                let json = JSON(["count": count])
+                try response.status(.OK).send(json: json).end()
+                
+            } catch {
+                Log.error("communications error")
+            }
+        }
+    }
 }

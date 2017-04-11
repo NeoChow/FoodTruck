@@ -29,6 +29,9 @@ public final class FoodTruckController {
         // all trucks:
         router.get(trucksPath, handler: getTrucks)
         
+        //truck count
+        router.get("\(trucksPath)/count", handler: getTruckCount)
+        
         //add truck:
         router.post(trucksPath, handler: addTruck)
         
@@ -41,8 +44,7 @@ public final class FoodTruckController {
         //update truck
         router.put("\(trucksPath)/:id", handler: updateTruckById)
         
-        //truck count
-        router.get("\(trucksPath)/count", handler: getTruckCount)
+        
     }
     
     private func getTrucks(request: RouterRequest, response: RouterResponse, next: () -> Void) {

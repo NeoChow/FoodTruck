@@ -107,17 +107,21 @@ class FoodTruckAPITests: XCTestCase {
         }
         let clearExpectation = expectation(description: "clear all db docs")
         
-        trucks.clearAll { (err) in
-            
-            
-        }
-        trucks.countTrucks { (count, err) in
-            XCTAssertEqual(count, 0)
-            
-            //todo: countReviews, clear reviews
-            
-            clearExpectation.fulfill()
-            
+        trucks.addTruck(name: "testClearAll", foodType: "testClearAll", avgCost: 0, latitude: 0, longitude: 0) { (addedTruck, err) in
+            guard err == nil else {
+                XCTFail()
+                return
+            }
+            trucks.clearAll { (err) in
+                
+                
+            }
+            trucks.countTrucks { (count, err) in
+                XCTAssertEqual(count, 0)
+                //todo: countReviews, clear reviews
+                
+                clearExpectation.fulfill()
+            }
         }
         waitForExpectations(timeout: 5) { (err) in
             XCTAssertNil(err, "clearAll Timeout")
@@ -148,7 +152,6 @@ class FoodTruckAPITests: XCTestCase {
                         XCTFail()
                         return
                     }
-                    
                 })
                 //count trucks and reviews to assert that count == 0
                 trucks.countTrucks(completion: { (count, err) in
@@ -164,4 +167,35 @@ class FoodTruckAPITests: XCTestCase {
         }
     }
 
+    //Count of all trucks:
+    func testCountAllTrucks(){
+        guard let trucks = trucks else {
+            XCTFail()
+            return
+        }
+        
+        let countExpectation = expectation(description: "Test Truck Count")
+        //add 5-10 trucks, then count to be sure correct:
+        for _ in 0..<5 {
+            trucks.addTruck(name: "testCount", foodType: "testCount", avgCost: 0, latitude: 0, longitude: 0, completion: { (addedTruck, err) in
+                guard err == nil else {
+                    XCTFail()
+                    return
+                }
+            })
+        }
+        //count should == 5
+        trucks.countTrucks { (count, err) in
+            guard err == nil else {
+                XCTFail()
+                return
+            }
+            XCTAssertEqual(count, 5)
+            countExpectation.fulfill()
+        }
+        waitForExpectations(timeout: 5) { (err) in
+            XCTAssertNil(err)
+        }
+    }
+    
 }
